@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ParkingLot.Entities;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,20 +15,19 @@ namespace ParkingLot
         public static bool IsWorkShift = false;
         public static decimal TotalIncome = 0.0m;
         public static int TicketsSold = 0;
+        public static IDictionary<Ticket, string> ParkingCars = new Dictionary<Ticket, string>();
 
 
         public static void Main()
         {
-            var parkingCars = new Dictionary<string, string>();
-
             do
             {
                 var menuInput = ProvideMenuInput();
-                ExecuteActionFromMenu(menuInput, parkingCars);
+                ExecuteActionFromMenu(menuInput);
             } while (IsWorkShift);
         }
 
-        public static void ExecuteActionFromMenu(int menuInput, IDictionary<string, string> parkingCars)
+        public static void ExecuteActionFromMenu(int menuInput)
         {
             switch (menuInput)
             {
@@ -35,71 +35,79 @@ namespace ParkingLot
                     IsWorkShift = !IsWorkShift;
                     break;
                 case 1:
-                    var newTicket = GenerateTicket(parkingCars);
-                    LetNewCarIn(newTicket, parkingCars);
+                    var newTicket = GenerateTicket();
+                    LetNewCarIn(newTicket);
                     break;
                 case 2:
                     var ticket = GetTicket();
-                    var car = GetCarFromTicket(ticket, parkingCars);
+                    var car = GetCarFromTicket(ticket);
                     if (string.IsNullOrEmpty(car)) return;
-                    
+
                     ChargeTicket(ticket);
-                    LetCarOut(car, ticket, parkingCars);
+                    LetCarOut(car, ticket);
                     break;
                 case 3:
-                    DisplayStats(parkingCars);
+                    DisplayStats();
                     break;
                 default:
                     break;
             }
         }
 
-        private static void DisplayCars(IDictionary<string, string> parkingCars)
+        private static void DisplayCars()
         {
-            foreach (var car in parkingCars)
+            foreach (var car in ParkingCars)
             {
                 var (ticket, registration) = car;
                 Console.WriteLine($"\t[{ticket}] - {registration}");
             }
         }
 
-        private static void LetCarOut(string car, string ticket, IDictionary<string, string> parkingCars)
+        private static void LetCarOut(string car, Ticket ticket)
         {
-            parkingCars.Remove(ticket);
-            
+            ParkingCars.Remove(ticket);
+
             Console.WriteLine($"Car [{car}] left parking lot.");
             Pause();
         }
 
-        private static void ChargeTicket(string ticket)
+        private static void ChargeTicket(Ticket ticket)
         {
-            var ticketPrice = 9.99m;
+            var pricePerSecond = 0.99m;
+            var parkingTime = DateTime.Now - ticket.CreatedAt;
+
+            var ticketPrice = parkingTime.Seconds * pricePerSecond;
             TotalIncome += ticketPrice;
+            Console.WriteLine($"Paid {ticketPrice} HRK.");
         }
 
-        private static string GetCarFromTicket(string ticket, IDictionary<string, string> parkingCars)
+        private static string GetCarFromTicket(Ticket ticket)
         {
-            parkingCars.TryGetValue(ticket, out var car);
+            ParkingCars.TryGetValue(ticket, out var car);
             return car;
         }
 
-        private static void LetNewCarIn(string newTicket, IDictionary<string, string> parkingCars)
+        private static void LetNewCarIn(Ticket newTicket)
         {
             var newCar = $"ZG-{RandomNumber}-AJ";
-            parkingCars.Add(newTicket, newCar);
+            ParkingCars.Add(newTicket, newCar);
 
             Console.WriteLine($"Car [{newCar}] entered parking lot.");
             Pause();
         }
 
-        private static string GenerateTicket(IDictionary<string, string> parkingCars)
+        private static Ticket GenerateTicket()
         {
-            return $"ticket-{++TicketsSold}";
+            var ticketId = $"ticket-{++TicketsSold}";
+            var ticket = new Ticket(ticketId);
+
+            return ticket;
         }
 
-        public static string GetTicket()
+        public static Ticket GetTicket()
         {
             var ticketInput = string.Empty;
+            var ticket = new Ticket();
 
             do
             {
@@ -110,16 +118,35 @@ namespace ParkingLot
                     "======================================\n");
 
                 ticketInput = Console.ReadLine();
-                if (string.IsNullOrEmpty(ticketInput))
+                ticket = ValidateTicket(ticketInput);
+
+                if (string.IsNullOrEmpty(ticketInput) && ticket.IsValid())
                 {
                     Console.WriteLine("Invalid ticket number, please try again!");
+                    Pause();
+                    continue;
                 }
 
                 Pause();
             }
-            while (string.IsNullOrEmpty(ticketInput));
+            while (!ticket.IsValid());
 
-            return ticketInput;
+            return ticket;
+        }
+
+        public static Ticket ValidateTicket(string ticketId)
+        {
+            Ticket validTicket = new Ticket();
+
+            foreach (var carTicket in ParkingCars.Keys)
+            {
+                if (ticketId != carTicket.Id)
+                    continue;
+
+                validTicket = carTicket;
+            }
+
+            return validTicket;
         }
 
         public static int ProvideMenuInput()
@@ -149,13 +176,13 @@ namespace ParkingLot
             return menuInput;
         }
 
-        private static void DisplayStats(IDictionary<string, string> parkingCars)
+        private static void DisplayStats()
         {
             Console.WriteLine("" +
                 "====================\n" +
                 "Stats:\n" +
-                $"No. of cars in lot: {parkingCars.Count}\n");
-            DisplayCars(parkingCars);
+                $"No. of cars in lot: {ParkingCars.Count}\n");
+            DisplayCars();
             Console.WriteLine("\n" +
                 $"Total income: {TotalIncome} HRK\n" +
                 "====================\n"
