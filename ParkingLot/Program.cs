@@ -1,4 +1,5 @@
 ﻿using ParkingLot.Entities;
+using ParkingLot.Enums;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace ParkingLot
         public static bool IsWorkShift = false;
         public static decimal TotalIncome = 0.0m;
         public static int TicketsSold = 0;
-        public static IDictionary<Ticket, string> ParkingCars = new Dictionary<Ticket, string>();
+        public static IDictionary<Ticket, Car> ParkingCars = new Dictionary<Ticket, Car>();
 
 
         public static void Main()
@@ -41,7 +42,7 @@ namespace ParkingLot
                 case 2:
                     var ticket = GetTicket();
                     var car = GetCarFromTicket(ticket);
-                    if (string.IsNullOrEmpty(car)) return;
+                    if (car is null) return;
 
                     ChargeTicket(ticket);
                     LetCarOut(car, ticket);
@@ -56,14 +57,14 @@ namespace ParkingLot
 
         private static void DisplayCars()
         {
-            foreach (var car in ParkingCars)
+            foreach (var parkingCar in ParkingCars)
             {
-                var (ticket, registration) = car;
-                Console.WriteLine($"\t[{ticket}] - {registration}");
+                var (ticket, car) = parkingCar;
+                Console.WriteLine($"\t{ticket} - {car}");
             }
         }
 
-        private static void LetCarOut(string car, Ticket ticket)
+        private static void LetCarOut(Car car, Ticket ticket)
         {
             ParkingCars.Remove(ticket);
 
@@ -81,7 +82,7 @@ namespace ParkingLot
             Console.WriteLine($"Paid {ticketPrice} HRK.");
         }
 
-        private static string GetCarFromTicket(Ticket ticket)
+        private static Car GetCarFromTicket(Ticket ticket)
         {
             ParkingCars.TryGetValue(ticket, out var car);
             return car;
@@ -89,7 +90,46 @@ namespace ParkingLot
 
         private static void LetNewCarIn(Ticket newTicket)
         {
-            var newCar = $"ZG-{RandomNumber}-AJ";
+            var newCar = new Car
+            {
+                Id = $"ZG-{RandomNumber}-AJ",
+            };
+
+
+            Console.Clear();
+            Console.WriteLine("" +
+                "======================================\n" +
+                "Please input car type:\n" +
+                $"\t{(int)VehicleType.Truck} - {VehicleType.Truck}\n" +
+                $"\t{(int)VehicleType.Luxury} - {VehicleType.Luxury}\n" +
+                $"\t{(int)VehicleType.OffRoad} - {VehicleType.OffRoad}\n" +
+                $"\t{(int)VehicleType.Small}/anything else - {VehicleType.Small}\n" +
+                "======================================\n");
+
+            int.TryParse(Console.ReadLine(), out int typeInput);
+            switch (typeInput)
+            {
+                case (int)VehicleType.Truck:
+                    newCar.Type = VehicleType.Truck;
+                    break;
+
+                case (int)VehicleType.OffRoad:
+                    newCar.Type = VehicleType.OffRoad;
+                    break;
+
+                case (int)VehicleType.Luxury:
+                    newCar.Type = VehicleType.Luxury;
+                    break;
+
+                case (int)VehicleType.Small:
+                    newCar.Type = VehicleType.Small;
+                    break;
+
+                default:
+                    newCar.Type = VehicleType.Small;
+                    break;
+            }
+
             ParkingCars.Add(newTicket, newCar);
 
             Console.WriteLine($"Car [{newCar}] entered parking lot.");
