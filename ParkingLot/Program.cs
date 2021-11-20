@@ -40,10 +40,11 @@ namespace ParkingLot
                     break;
                 case 2:
                     var ticket = GetTicket();
-                    var car = ValidateTicket(ticket, parkingCars);
-                    if (car is null) return;
+                    var car = GetCarFromTicket(ticket, parkingCars);
+                    if (string.IsNullOrEmpty(car)) return;
+                    
                     ChargeTicket(ticket);
-                    LetCarOut(car, parkingCars);
+                    LetCarOut(car, ticket, parkingCars);
                     break;
                 case 3:
                     DisplayStats(parkingCars);
@@ -62,9 +63,12 @@ namespace ParkingLot
             }
         }
 
-        private static void LetCarOut(string car, IDictionary<string, string> parkingCars)
+        private static void LetCarOut(string car, string ticket, IDictionary<string, string> parkingCars)
         {
-            parkingCars.Remove(car);
+            parkingCars.Remove(ticket);
+            
+            Console.WriteLine($"Car [{car}] left parking lot.");
+            Pause();
         }
 
         private static void ChargeTicket(string ticket)
@@ -73,14 +77,9 @@ namespace ParkingLot
             TotalIncome += ticketPrice;
         }
 
-        private static string? ValidateTicket(string ticket, IDictionary<string, string> parkingCars)
+        private static string GetCarFromTicket(string ticket, IDictionary<string, string> parkingCars)
         {
-            var isValid = parkingCars.TryGetValue(ticket, out var car);
-            if (isValid)
-            {
-                parkingCars.Remove(ticket);
-            }
-
+            parkingCars.TryGetValue(ticket, out var car);
             return car;
         }
 
