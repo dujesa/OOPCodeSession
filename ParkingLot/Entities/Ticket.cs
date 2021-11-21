@@ -4,13 +4,24 @@ namespace ParkingLot.Entities
 {
     public struct Ticket
     {
-        public string Id { get; }
-        public DateTime CreatedAt { get; }
+        public string Id { get; init; }
+        public decimal PriceRate { get; set; }
+        public decimal Price
+        {
+            get
+            {
+                var parkedTimeUnits = ParkedTime().Seconds;
+                return parkedTimeUnits * PriceRate;
+            }
+        }
 
-        public Ticket(string id = "")
+        private DateTime _createdAt;
+
+        public Ticket(string id = "", decimal priceRate = 0.0m)
         {
             Id = id;
-            CreatedAt = DateTime.Now;
+            PriceRate = priceRate;
+            _createdAt = DateTime.Now;
         }
 
         public override bool Equals(object equtable)
@@ -21,8 +32,14 @@ namespace ParkingLot.Entities
             return false;
         }
 
-        public override string ToString() => $"#{Id} [{CreatedAt.ToLongTimeString()}]";
-    
+        public override string ToString() => $"#{Id} [Currently: {Price} HRK])";
+
         public bool IsValid() => !string.IsNullOrEmpty(Id);
+
+
+        private TimeSpan ParkedTime()
+        {
+            return DateTime.Now - _createdAt;
+        }
     }
 }

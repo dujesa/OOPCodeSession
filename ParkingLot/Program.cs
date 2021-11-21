@@ -74,12 +74,8 @@ namespace ParkingLot
 
         private static void ChargeTicket(Ticket ticket)
         {
-            var pricePerSecond = 0.99m;
-            var parkingTime = DateTime.Now - ticket.CreatedAt;
-
-            var ticketPrice = parkingTime.Seconds * pricePerSecond;
-            TotalIncome += ticketPrice;
-            Console.WriteLine($"Paid {ticketPrice} HRK.");
+            TotalIncome += ticket.Price;
+            Console.WriteLine($"Paid {ticket.Price} HRK.");
         }
 
         private static Car GetCarFromTicket(Ticket ticket)
@@ -130,6 +126,7 @@ namespace ParkingLot
                     break;
             }
 
+            newTicket.PriceRate = newCar.CalculatePriceRate();
             ParkingCars.Add(newTicket, newCar);
 
             Console.WriteLine($"Car [{newCar}] entered parking lot.");
