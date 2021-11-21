@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ParkingLot.Helpers;
+using System;
 
 namespace ParkingLot.Entities
 {
@@ -6,14 +7,6 @@ namespace ParkingLot.Entities
     {
         public string Id { get; init; }
         public decimal PriceRate { get; set; }
-        public decimal Price
-        {
-            get
-            {
-                var parkedTimeUnits = ParkedTime().Seconds;
-                return parkedTimeUnits * PriceRate;
-            }
-        }
 
         private DateTime _createdAt;
 
@@ -32,14 +25,10 @@ namespace ParkingLot.Entities
             return false;
         }
 
-        public override string ToString() => $"#{Id} [Currently: {Price} HRK])";
+        public override string ToString() => $"#{Id}";
 
         public bool IsValid() => !string.IsNullOrEmpty(Id);
 
-
-        private TimeSpan ParkedTime()
-        {
-            return DateTime.Now - _createdAt;
-        }
+        public TimeSpan ParkedTime => DateTime.Now - _createdAt;
     }
 }

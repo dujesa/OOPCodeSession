@@ -1,5 +1,6 @@
 ﻿using ParkingLot.Entities;
 using ParkingLot.Enums;
+using ParkingLot.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,8 +15,6 @@ namespace ParkingLot
         #endregion
 
         public static bool IsWorkShift = false;
-        public static decimal TotalIncome = 0.0m;
-        public static int TicketsSold = 0;
         public static IDictionary<Ticket, Car> ParkingCars = new Dictionary<Ticket, Car>();
 
 
@@ -36,15 +35,13 @@ namespace ParkingLot
                     IsWorkShift = !IsWorkShift;
                     break;
                 case 1:
-                    var newTicket = GenerateTicket();
-                    LetNewCarIn(newTicket);
+                    LetNewCarIn();
                     break;
                 case 2:
                     var ticket = GetTicket();
                     var car = GetCarFromTicket(ticket);
                     if (car is null) return;
 
-                    ChargeTicket(ticket);
                     LetCarOut(car, ticket);
                     break;
                 case 3:
@@ -66,16 +63,14 @@ namespace ParkingLot
 
         private static void LetCarOut(Car car, Ticket ticket)
         {
+            var ticketPrice = CashBox.CalculatePrice(car.Type, ticket);
+            CashBox.Charge(ticketPrice);
+            Console.WriteLine($"Paid {ticketPrice} HRK.");
+
             ParkingCars.Remove(ticket);
 
             Console.WriteLine($"Car [{car}] left parking lot.");
             Pause();
-        }
-
-        private static void ChargeTicket(Ticket ticket)
-        {
-            TotalIncome += ticket.Price;
-            Console.WriteLine($"Paid {ticket.Price} HRK.");
         }
 
         private static Car GetCarFromTicket(Ticket ticket)
@@ -84,7 +79,7 @@ namespace ParkingLot
             return car;
         }
 
-        private static void LetNewCarIn(Ticket newTicket)
+        private static void LetNewCarIn()
         {
             var newCar = new Car
             {
@@ -103,43 +98,23 @@ namespace ParkingLot
                 "======================================\n");
 
             int.TryParse(Console.ReadLine(), out int typeInput);
-            switch (typeInput)
+            newCar.Type = typeInput switch
             {
-                case (int)VehicleType.Truck:
-                    newCar.Type = VehicleType.Truck;
-                    break;
+                (int)VehicleType.Truck => VehicleType.Truck,
+                (int)VehicleType.OffRoad => VehicleType.OffRoad,
+                (int)VehicleType.Luxury => VehicleType.Luxury,
+                _ => VehicleType.Small,
+            };
 
-                case (int)VehicleType.OffRoad:
-                    newCar.Type = VehicleType.OffRoad;
-                    break;
-
-                case (int)VehicleType.Luxury:
-                    newCar.Type = VehicleType.Luxury;
-                    break;
-
-                case (int)VehicleType.Small:
-                    newCar.Type = VehicleType.Small;
-                    break;
-
-                default:
-                    newCar.Type = VehicleType.Small;
-                    break;
-            }
-
-            newTicket.PriceRate = newCar.CalculatePriceRate();
+            var newTicket = CashBox.GenerateTicket();
+            newTicket.PriceRate = CashBox.CalculatePriceRate(newCar.Type);
             ParkingCars.Add(newTicket, newCar);
 
             Console.WriteLine($"Car [{newCar}] entered parking lot.");
             Pause();
         }
 
-        private static Ticket GenerateTicket()
-        {
-            var ticketId = $"ticket-{++TicketsSold}";
-            var ticket = new Ticket(ticketId);
 
-            return ticket;
-        }
 
         public static Ticket GetTicket()
         {
@@ -221,7 +196,7 @@ namespace ParkingLot
                 $"No. of cars in lot: {ParkingCars.Count}\n");
             DisplayCars();
             Console.WriteLine("\n" +
-                $"Total income: {TotalIncome} HRK\n" +
+                $"Total income: {CashBox.TotalIncome} HRK\n" +
                 "====================\n"
                 );
 
